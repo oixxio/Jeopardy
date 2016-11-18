@@ -11,11 +11,7 @@ public class GameManager : MonoBehaviour {
     
     private string cardName;
     private string cardValue;
-    private string[] bet = new string[5] {"","","","",""};
-    private string bet2 = "";
-    private string bet3 = "";
-    private string bet4 = "";
-    private string bet5 = ""; 
+    private string[] bet = new string[5] {"","","","",""};    
     private int playerNumber = 0;
     private int level = 1;
     private bool timerFlag = false;
@@ -23,24 +19,37 @@ public class GameManager : MonoBehaviour {
     private bool cardChosen = false;
     private bool activeTurn = false;
     private bool createInput = true;
-    private Player[] players = new Player[2];
+    private Player[] players = new Player[5];
     private LinkedList<int> turns = new LinkedList<int>();
     private LinkedListNode<int> turn;
     private GameObject chosenCard;
    
     void Awake()
     {
-        active = Resources.Load("Materials/Player Turn", typeof(Material)) as Material;
+        //Aca cargo manualmente 3 equipos esto se deberia hacer desde la pantalla de seleccion
         GameObject playerOixxio = (GameObject)Instantiate(Booth, new Vector3(4, -3, 6.6f), Quaternion.identity);
         Player player1 = new Player("Oixxio", playerOixxio);
         players[0] = player1;
-        player1.SetPoints(100);
+        turns.AddLast(0);
         GameObject playerAvon = (GameObject)Instantiate(Booth, new Vector3(8, -3, 6.6f), Quaternion.identity);
         Player player2 = new Player("Avon", playerAvon);
         players[1] = player2;
-        turns.AddLast(0);
         turns.AddLast(1);
-        turn = turns.First;        
+        GameObject playerFacu = (GameObject)Instantiate(Booth, new Vector3(12 ,-3, 6.6f), Quaternion.identity);
+        Player player3 = new Player("Facu", playerFacu);
+        players[2] = player3;  
+        turns.AddLast(2);
+        GameObject playerGuille = (GameObject)Instantiate(Booth, new Vector3(16, -3, 6.6f), Quaternion.identity);
+        Player player4 = new Player("Guille", playerGuille);
+        players[3] = player4;
+        turns.AddLast(3);
+        GameObject playerFede = (GameObject)Instantiate(Booth, new Vector3(20, -3, 6.6f), Quaternion.identity);
+        Player player5 = new Player("Fede", playerFede);
+        players[4] = player5;
+        turns.AddLast(4);
+
+        turn = turns.First;       
+        //genero el primer tablero 
         Card[] cardDeck = new CardDeck(csvFile).GetDeck();
         new Board(Card, cardDeck,level);
         
@@ -71,10 +80,13 @@ public class GameManager : MonoBehaviour {
                         //evito que elija otra carta del tablero
                         activeTurn = true;
                         cardValue = hit.transform.FindChild("PointsText").gameObject.GetComponent<TextMesh>().text;
-                        Destroy(hit.transform.gameObject);
-                        hit.transform.parent.gameObject.transform.position = frontPosition;
                         //Seteo el valor a mostrar de los puntos                    
                         GameObject.Find("GUIPoints/PointsText").GetComponent<TextMesh>().text = cardValue;
+                        //muevo la pregunta adelante
+                        hit.transform.parent.gameObject.transform.position = frontPosition;
+
+                        Destroy(hit.transform.gameObject);
+                                                
                         //Comienza el conteo de los 10 segundos             
                         StartCoroutine("cardTimer");
                         //Habilita las visualizaciones de los GUI
@@ -84,28 +96,30 @@ public class GameManager : MonoBehaviour {
                         StartCoroutine(rotateCard(GameObject.Find("GUIAnswerNotOk")));
 
                     }
-                    //Muestro la respuesta
+                    /*Muestro la respuesta
                     if (hit.transform.gameObject.name.Contains("Front"))
                     {
                         StartCoroutine(rotateCard(hit.transform.parent.gameObject));                        
                         StopCoroutine("cardTimer");
-                    }
+                    }*/
                 }
 
 
 
                 //responde bien
                 if (hit.transform.parent.gameObject.name.Contains("AnswerOk"))
-                {
-                    Debug.Log("AnswerOk");
+                {                    
                     cardValue = GameObject.Find("GUIPoints/PointsText").GetComponent<TextMesh>().text;
-                    Destroy(chosenCard);
+                    //Se le suman los puntos al jugador
+                    players[turn.Value].SetPoints(int.Parse(cardValue));
+
                     StartCoroutine(rotateCard(GameObject.Find("GUITimer")));
                     StartCoroutine(rotateCard(GameObject.Find("GUIPoints")));
                     StartCoroutine(rotateCard(GameObject.Find("GUIAnswerOk")));
                     StartCoroutine(rotateCard(GameObject.Find("GUIAnswerNotOk")));
-                    //Se le suman los puntos al jugador
-                    players[turn.Value].SetPoints(int.Parse(cardValue));
+                    StartCoroutine(rotateCard(chosenCard));
+                    Destroy(chosenCard,5);
+                    
                     StopCoroutine("cardTImer");
                     activeTurn = false;
                 }
@@ -121,9 +135,10 @@ public class GameManager : MonoBehaviour {
                         StartCoroutine(rotateCard(GameObject.Find("GUIAnswerNotOk")));
                         StartCoroutine(rotateCard(GameObject.Find("GUITimer")));
                         StartCoroutine(rotateCard(GameObject.Find("GUIPoints")));
+                        StartCoroutine(rotateCard(chosenCard));
                         selectPlayer = false;
                         activeTurn = false;
-                        Destroy(chosenCard);
+                        Destroy(chosenCard,5);
                         //pasa al siguiente turno
                         if (turn.Next != null)
                         {
@@ -168,17 +183,16 @@ public class GameManager : MonoBehaviour {
                         StartCoroutine(rotateCard(GameObject.Find("GUIAnswerNotOk")));
                         StartCoroutine(rotateCard(GameObject.Find("GUITimer")));
                         StartCoroutine(rotateCard(GameObject.Find("GUIPoints")));
+                        StartCoroutine(rotateCard(chosenCard));
                         //habilita las selecciones y saca la carta de la pregunta
                         selectPlayer = false;
                         activeTurn = false;
-                        Destroy(chosenCard);
+                        Destroy(chosenCard,5);
                     }
                 }
             }
         }else
-        {
-            
-            
+        {                        
             if (Input.GetMouseButtonDown(0))
             {
                 //Levanto el objeto sobre el cual clickea y actuo en base a eso        
@@ -217,8 +231,6 @@ public class GameManager : MonoBehaviour {
                         StartCoroutine(rotateCard(hit.transform.parent.gameObject));                                                
                     }
                 }
-
-
                 //responde bien
                 if (hit.transform.parent.gameObject.name.Contains("AnswerOk"))
                 {
@@ -253,55 +265,46 @@ public class GameManager : MonoBehaviour {
                     }
                     //Se le suman los puntos al jugador                    
                     activeTurn = false;
-                }
-                //Algun equipo responde bien la pregunta
-                if (selectPlayer)
-                {
-                    Debug.Log("Select Player");
-                    //Elije el equipo que respondio bien        
-                    if (hit.transform.gameObject.name.Contains("PlayerFront"))
-                    {
-                        //Asigna el turno siguiente al equipo elegido         
-                        for (int i = 0; i < players.Length; i++)
-                        {
-                            if (players[i].Name() == hit.transform.parent.gameObject.name)
-                            {
-                                for (LinkedListNode<int> node = turns.First; node != null; node = node.Next)
-                                {
-                                    if (node.Value == i)
-                                        turn = node;
-                                }
-                                break;
-                            }
-                        }
-                        //suma los puntos al equipo elegido
-                        players[turn.Value].SetPoints(int.Parse(cardValue));
-                        //gira las tarjetas de GUI para que no se vean                    
-                        StartCoroutine(rotateCard(GameObject.Find("GUIAnswerNotOk")));
-                        StartCoroutine(rotateCard(GameObject.Find("GUITimer")));
-                        StartCoroutine(rotateCard(GameObject.Find("GUIPoints")));
-                        //habilita las selecciones y saca la carta de la pregunta
-                        selectPlayer = false;
-                        activeTurn = false;
-                        Destroy(chosenCard);
-                    }
-                }
+                }                
             }
         }               
         //chequea que no haya mas cartas en la escena para pasar de nivel
         if (GameObject.FindGameObjectsWithTag("Card").Length == 0)
         {
             level += 1;
-            if(level == 3)
+            //Asigna el turno siguiente al equipo elegido             
+            if (level == 3)
             {
-                Card[] cardDeck = new CardDeck(csvFile).GetDeck();
-                new Board(Card, cardDeck, level);
+                //borra los equipos con puntaje negativo        
+                for (int i = 0; i < players.Length; i++)
+                {
+                    if (players[i].GetPoints() <= 0)
+                    {
+                        for (LinkedListNode<int> node = turns.First; node != null; node = node.Next)
+                        {
+                            if (node.Value == i)
+                            {
+                                turns.Remove(node.Value);
+                                Destroy(GameObject.Find(players[i].Name()));
+                            }
+                        }
+                        break;
+                    }
+                }
+                if (GameObject.FindGameObjectsWithTag("Team").Length >= 2)
+                {
+                    Card[] cardDeck = new CardDeck(csvFile).GetDeck();
+                    new Board(Card, cardDeck, level);
+                }else
+                {
+                    //pantalla Final
+                }
+                
             }
             else
             {
                 Card[] cardDeck = new CardDeck(csvFile).GetDeck();
                 new Board(Card, cardDeck, level);
-
                 int aux;
                 int min = 0;
                 aux = players[0].GetPoints();
@@ -345,25 +348,24 @@ public class GameManager : MonoBehaviour {
                 case 3:
                     bet[0] = GUI.TextField(new Rect(10, 10, 200, 20), bet[0], 25);
                     bet[1] = GUI.TextField(new Rect(10, 10 + offset, 200, 20), bet[1], 25);
-                    bet[2] = GUI.TextField(new Rect(10, 10 + offset, 200, 20), bet[2], 25);
+                    bet[2] = GUI.TextField(new Rect(10, 10 + offset*2, 200, 20), bet[2], 25);
                     break;
                 case 4:
                     bet[0] = GUI.TextField(new Rect(10, 10, 200, 20), bet[0], 25);
                     bet[1] = GUI.TextField(new Rect(10, 10 + offset, 200, 20), bet[1], 25);
-                    bet[2] = GUI.TextField(new Rect(10, 10 + offset, 200, 20), bet[2], 25);
-                    bet[3] = GUI.TextField(new Rect(10, 10 + offset, 200, 20), bet[3], 25);
+                    bet[2] = GUI.TextField(new Rect(10, 10 + offset*2, 200, 20), bet[2], 25);
+                    bet[3] = GUI.TextField(new Rect(10, 10 + offset*3, 200, 20), bet[3], 25);
                     break;
                 case 5:
                     bet[0] = GUI.TextField(new Rect(10, 10, 200, 20), bet[0], 25);
                     bet[1] = GUI.TextField(new Rect(10, 10 + offset, 200, 20), bet[1], 25);
-                    bet[2] = GUI.TextField(new Rect(10, 10 + offset, 200, 20), bet[2], 25);
-                    bet[3] = GUI.TextField(new Rect(10, 10 + offset, 200, 20), bet[3], 25);
-                    bet[4] = GUI.TextField(new Rect(10, 10 + offset, 200, 20), bet[4], 25);
+                    bet[2] = GUI.TextField(new Rect(10, 10 + offset*2, 200, 20), bet[2], 25);
+                    bet[3] = GUI.TextField(new Rect(10, 10 + offset*3, 200, 20), bet[3], 25);
+                    bet[4] = GUI.TextField(new Rect(10, 10 + offset*4, 200, 20), bet[4], 25);
                     break;
             }                    
             createInput = false;
-        }        
-       // stringToEdit = GUI.TextField(new Rect(GameObject.F.transform.position.x, players[0].transform.position.y, 200, 20), stringToEdit, 25);
+        }               
     }
     //gira el GameObject 180 grados
     private IEnumerator rotateCard(GameObject go)
@@ -379,7 +381,6 @@ public class GameManager : MonoBehaviour {
     private IEnumerator cardTimer()
     {
         int levelTime = 10;
-
 
         if (level == 3)
             levelTime = 30;
